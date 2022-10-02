@@ -18,18 +18,36 @@ async function test_case(){
         links_href[i] = links[i].getAttribute("href");
 
     }
+    let inStockTitles = []
+    let inStockLinks = []
 
     for(let item of links_href){
         await driver.get(item);
-        console.log(item);
         let button = await driver.findElement(By.css("div.my-6:nth-child(1) > button:nth-child(1) > span:nth-child(1)"))
         let title = await driver.findElement(By.css("h2.text-xl")).getAttribute("textContent");
         let available= await button.getAttribute("textContent");
-        if( available=="Add to Cart"){
-            console.log(title);
+        
+        
+        if( available=="Currently Unavailable"){
+            inStockTitles.push(title);
+            inStockLinks.push(item);
         }
 
     }
+    for(let inStockTitle in inStockTitles){
+        console.log(inStockTitle);
+    }
+    let output = "These items are currently available:\n"
+    for(let j=0;j>inStockTitles.length;j++){
+        output.concat(inStockTitles[j],": ",inStockLinks[j],"\n");
+    }
+    console.log(output)
+ 
+    client.messages.create({
+        to: process.env.MY_PHONE_NUMBER,
+        from: "+15625544270",
+        body: output 
+    })
       
     driver.quit();
     
