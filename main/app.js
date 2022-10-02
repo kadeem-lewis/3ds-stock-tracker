@@ -1,6 +1,11 @@
 const {By, Key, Builder} = require("selenium-webdriver");
 require("geckodriver");
 
+//const accountSid = ;
+//const authToken = ;
+
+const client = require('twilio')(accountSid,authToken);
+
 async function test_case(){
 
     let driver = await new Builder().forBrowser("firefox").build();
@@ -15,7 +20,13 @@ async function test_case(){
 
     for(let item of links_href){
         await driver.get(item);
-        
+        console.log(item);
+        let button = await driver.findElement(By.css("div.my-6:nth-child(1) > button:nth-child(1) > span:nth-child(1)"))
+        let title = await driver.findElement(By.css("h2.text-xl")).getAttribute("textContent");
+        let available= await button.getAttribute("textContent");
+        if( available=="Add to Cart"){
+            console.log(title);
+        }
 
     }
       
