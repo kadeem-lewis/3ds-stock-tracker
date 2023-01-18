@@ -4,3 +4,5 @@ A NodeJs script that scrapes Gamestop.com to see which 3ds models are currently 
 
 - [ ] Only run during store hours
 - [ ] Don't check for items that have been in stock within a specific timeframe
+- [ ] Shorten product links using URL Shortener
+- [ ] Switch from http trigger to pubsub trigger
