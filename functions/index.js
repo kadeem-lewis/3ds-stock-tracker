@@ -1,8 +1,15 @@
 //import functions from "firebase-functions";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
+import * as dotenv from "dotenv";
+import twilio from "twilio";
 
 import { Console } from "./Console.js";
+
+dotenv.config();
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = twilio(accountSid, authToken);
 
 async function getPageData(url) {
   try {
@@ -33,33 +40,67 @@ async function getProductLinks() {
 
 async function checkProductAvailability() {
   const products = await getProductLinks();
-  let productObject = {};
-  const productList = products.map(async (product, index) => {
-    const productData = await getPageData(`https://www.gamestop.com${product}`);
-    const $ = cheerio.load(productData);
-    const productName = `product${index + 1}`;
-    productObject[productName] = new Console(
-      $("title:first").text(),
-      $("button.bg-primary span:first").text(),
-      `https://www.gamestop.com${product}`
-    );
-
-    console.log(productObject[productName]);
-  });
+  const productList = await Promise.all(
+    products.map(async (product, index) => {
+      const productData = await getPageData(
+        `https://www.gamestop.com${product}`
+      );
+      const $ = cheerio.load(productData);
+      return new Console(
+        $("title:first").text(),
+        $("button.bg-primary span:first").text(),
+        `https://www.gamestop.com${product}`
+      );
+    })
+  );
   const availableProductList = productList.filter(
-    (product) => product.availability === "Currently Unavailable" //change back to Add to Cart after testing
+    (product) => product.availability.includes("Currently Unavailable") //change back to Add to Cart after testing
   );
   return availableProductList;
 }
+
 async function formatResults() {
+  let body = "";
   const availableItems = await checkProductAvailability();
-  const mostWantedItems = availableItems.filter(
-    (item) => item.title.search(/New/) //* Figure out way to do this currently
+  const mostWantedItems = availableItems.filter((item) =>
+    item.title.toLowerCase().includes("new")
   );
-  console.log(mostWantedItems);
+  const otherItems = availableItems.filter((item) => {
+    return !item.title.toLowerCase().includes("new");
+  });
+  if (mostWantedItems.length !== 0) {
+    body += "These New 3ds Devices are currently available: \n";
+    for (let item of mostWantedItems) {
+      body += `-${item}\n`;
+    }
+  } else {
+    body += "No New 3ds Devices are available. \n";
+  }
+  if (otherItems.length !== 0) {
+    body += "These other 3ds devices are available: \n";
+    for (let item of otherItems) {
+      body += `-${item}\n`;
+    }
+  }
+  return body;
 }
 //TODO: Twilio Stuff
-formatResults();
+async function sendMessage() {
+  const output = await formatResults();
+  if (output !== "") {
+    try {
+      client.messages.create({
+        to: process.env.MY_PHONE_NUMBER,
+        messagingServiceSid: "MGf6a5607f116aee10573b7a227c05c629",
+        body: output,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+}
+sendMessage();
+
 // // Create and deploy your first functions
 // // https://firebase.google.com/docs/functions/get-started
 //
