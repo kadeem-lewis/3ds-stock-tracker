@@ -1,14 +1,14 @@
-//import functions from "firebase-functions";
+import functions from "firebase-functions";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import * as dotenv from "dotenv";
-import twilio from "twilio";
 
 import { Console } from "./Console.js";
 
 dotenv.config();
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
+import twilio from "twilio";
 const client = twilio(accountSid, authToken);
 
 async function getPageData(url) {
@@ -53,8 +53,8 @@ async function checkProductAvailability() {
       );
     })
   );
-  const availableProductList = productList.filter(
-    (product) => product.availability.includes("Currently Unavailable") //change back to Add to Cart after testing
+  const availableProductList = productList.filter((product) =>
+    product.availability.toLowerCase().includes("add to cart")
   );
   return availableProductList;
 }
@@ -84,12 +84,11 @@ async function formatResults() {
   }
   return body;
 }
-//TODO: Twilio Stuff
 async function sendMessage() {
   const output = await formatResults();
   if (output !== "") {
     try {
-      client.messages.create({
+      const message = await client.messages.create({
         to: process.env.MY_PHONE_NUMBER,
         messagingServiceSid: "MGf6a5607f116aee10573b7a227c05c629",
         body: output,
@@ -99,12 +98,9 @@ async function sendMessage() {
     }
   }
 }
-sendMessage();
-
-// // Create and deploy your first functions
-// // https://firebase.google.com/docs/functions/get-started
-//
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+export const scheduleSendMessage = functions.https.onRequest((req, res) => {
+  cron.schedule("*/15 * * * *", () => {
+    sendMessage();
+  });
+  res.send("Task scheduled");
+});
