@@ -19,6 +19,7 @@
     "dotenv": "^16.0.3",
     "firebase-admin": "^10.0.2",
     "firebase-functions": "^3.18.0",
+    "node-cron": "^3.0.2",
     "node-fetch": "^3.3.0",
     "twilio": "^3.84.1"
   },
