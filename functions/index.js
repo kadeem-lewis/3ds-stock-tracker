@@ -10,6 +10,8 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 import twilio from "twilio";
 const client = twilio(accountSid, authToken);
+const url =
+  "https://www.gamestop.com/consoles-hardware?prefn1=platform&prefv1=Nintendo%203DS%7CNintendo%202DS";
 
 async function getPageData(url) {
   try {
@@ -19,15 +21,12 @@ async function getPageData(url) {
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
       },
     });
-    const body = await response.text();
-    return body;
+    return await response.text();
   } catch (error) {
     console.log(error);
   }
 }
 async function getProductLinks() {
-  const url =
-    "https://www.gamestop.com/consoles-hardware?prefn1=platform&prefv1=Nintendo%203DS%7CNintendo%202DS";
   const data = await getPageData(url);
   const $ = cheerio.load(data);
   const productLinks = [];
@@ -100,7 +99,7 @@ async function sendMessage() {
 }
 
 export const scheduleSendMessage = functions.pubsub
-  .schedule("*/15 9-21 * * *")
+  .schedule("*/15 10-21 * * *")
   .timeZone("America/New_York") // Users can choose timezone - default is America/Los_Angeles
   .onRun(async () => {
     await sendMessage();
